@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ranking Results - ATS Engine</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.8.0/vanilla-tilt.min.js"></script>
+</head>
+<body>
+    <div class="container container-large">
+        <header class="header">
+            <h1><i class="fa-solid fa-chart-pie" style="color: var(--accent-cyan);"></i> Executive Summary</h1>
+            <p>Candidates stack-ranked by semantic intelligence and strict keyword matching.</p>
+        </header>
+
+        <main class="main-content results-container">
+            <div class="jd-summary glass-panel">
+                <h2><i class="fa-solid fa-briefcase"></i> Job Context Benchmark</h2>
+                <div class="jd-text">
+                    <p>{{ jd }}</p>
+                </div>
+                <div style="display: flex; gap: 15px; margin-top: 1.5rem;">
+                    <a href="/" class="btn-secondary"><i class="fa-solid fa-arrow-left"></i> New Batch</a>
+                    <a href="/export" class="btn-primary" style="width: auto; padding: 0.8rem 1.5rem;"><i class="fa-solid fa-download"></i> Export Data</a>
+                </div>
+            </div>
+
+            <div class="candidates-list">
+                <h2 class="section-title"><i class="fa-solid fa-users-viewfinder"></i> Top Candidates</h2>
+                
+                {% if candidates %}
+                    {% for candidate in candidates %}
+                    <div class="candidate-card glass-panel" data-tilt data-tilt-max="1" data-tilt-speed="400" data-tilt-perspective="1000" style="animation-delay: {{ loop.index0 * 0.15 }}s">
+                        <div class="rank-badge">#{{ loop.index }}</div>
+                        
+                        <div class="candidate-info">
+                            <div class="candidate-header">
+                                <div>
+                                    <h3>
+                                        {% if '.docx' in candidate.filename.lower() %}
+                                            <i class="fa-solid fa-file-word" style="color: #3b82f6;"></i>
+                                        {% else %}
+                                            <i class="fa-regular fa-file-pdf" style="color: #ef4444;"></i>
+                                        {% endif %}
+                                        {{ candidate.filename }}
+                                    </h3>
+                                    <div class="contact-row">
+                                        {% if candidate.ats_data.email %}
+                                            <span class="pill"><i class="fa-solid fa-envelope"></i> {{ candidate.ats_data.email }}</span>
+                                        {% endif %}
+                                        {% if candidate.ats_data.phone %}
+                                            <span class="pill"><i class="fa-solid fa-phone"></i> {{ candidate.ats_data.phone }}</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Key Metrics Grid -->
+                            <div class="metrics-grid">
+                                <div class="metric-panel">
+                                    <div class="progress-ring overall-score {% if candidate.score > 75 %}score-good{% elif candidate.score > 40 %}score-avg{% else %}score-bad{% endif %}" data-pct="{{ candidate.score }}">
+                                        <svg><circle class="bg" cx="35" cy="35" r="31"></circle><circle class="fill" cx="35" cy="35" r="31"></circle></svg>
+                                        <div class="progress-ring-text">{{ candidate.score }}<span style="font-size:0.7em;">%</span></div>
+                                    </div>
+                                    <div class="metric-info">
+                                        <span class="metric-label">Jobscan Match Rate</span>
+                                        <span class="metric-value">{{ candidate.score }}</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="metric-panel">
+                                    <div class="progress-ring semantic-score" data-pct="{{ candidate.semantic_score }}">
+                                        <svg><circle class="bg" cx="35" cy="35" r="31"></circle><circle class="fill" cx="35" cy="35" r="31"></circle></svg>
+                                        <div class="progress-ring-text">{{ candidate.semantic_score }}<span style="font-size:0.7em;">%</span></div>
+                                    </div>
+                                    <div class="metric-info">
+                                        <span class="metric-label">Semantic Relevance</span>
+                                        <span class="metric-value">{{ candidate.semantic_score }}</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="metric-panel" style="flex-direction: column; align-items: flex-start; justify-content: center; gap: 5px;">
+                                    <span class="metric-label">Resume Impact</span>
+                                    <div style="display:flex; justify-content: space-between; width: 100%; align-items: baseline;">
+                                        <span class="metric-value" style="font-size:1.5rem;">{{ candidate.ats_data.quantifiable_metrics }}</span>
+                                        <span style="color:var(--text-secondary); font-size: 0.85rem;">Metrics</span>
+                                    </div>
+                                    <div style="display:flex; justify-content: space-between; width: 100%; align-items: baseline;">
+                                        <span class="metric-value" style="font-size:1.5rem;">{{ candidate.ats_data.action_verbs_found }}</span>
+                                        <span style="color:var(--text-secondary); font-size: 0.85rem;">Action Verbs</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Structural Checks -->
+                            <div class="structural-pills">
+                                <span class="struct-pill {% if candidate.ats_data.sections.education %}struct-found{% else %}struct-missing{% endif %}">
+                                    {% if candidate.ats_data.sections.education %}<i class="fa-solid fa-check"></i>{% else %}<i class="fa-solid fa-xmark"></i>{% endif %} Education
+                                </span>
+                                <span class="struct-pill {% if candidate.ats_data.sections.experience %}struct-found{% else %}struct-missing{% endif %}">
+                                    {% if candidate.ats_data.sections.experience %}<i class="fa-solid fa-check"></i>{% else %}<i class="fa-solid fa-xmark"></i>{% endif %} Experience
+                                </span>
+                                <span class="struct-pill" style="background: rgba(255,255,255,0.05); color: var(--text-secondary); border: 1px solid rgba(255,255,255,0.1);">
+                                    <i class="fa-solid fa-file-word"></i> Length: {{ candidate.ats_data.word_count }} words
+                                </span>
+                            </div>
+
+                            <!-- Skills Distribution -->
+                            <div class="skills-clouds">
+                                {% if candidate.ats_data.matched_skills %}
+                                <div class="skill-group matched">
+                                    <h4><i class="fa-solid fa-circle-check"></i> Matched Core Requirements</h4>
+                                    <div class="tags">
+                                        {% for skill in candidate.ats_data.matched_skills %}
+                                            <span class="tag">{{ skill }}</span>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                {% endif %}
+                                
+                                {% if candidate.ats_data.missing_skills %}
+                                <div class="skill-group missing">
+                                    <h4><i class="fa-solid fa-triangle-exclamation"></i> Critical Missing Skills</h4>
+                                    <div class="tags">
+                                        {% for skill in candidate.ats_data.missing_skills %}
+                                            <span class="tag">{{ skill }}</span>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Feedback -->
+                            <div class="feedback-box">
+                                <h4><i class="fa-solid fa-robot"></i> Recruiter AI Feedback</h4>
+                                <ul>
+                                    {% for icon, tip in candidate.ats_data.feedback_tips %}
+                                        <li><span style="font-size:1.2rem;">{{ icon }}</span> <span>{{ tip }}</span></li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="glass-panel" style="text-align:center; padding: 4rem;">
+                        <i class="fa-solid fa-satellite-dish fa-4x" style="color:var(--text-secondary); margin-bottom: 1rem;"></i>
+                        <h3 style="font-size:1.5rem;">No Candidates Parsed</h3>
+                        <p style="color:var(--text-secondary);">We couldn't extract any valid text from the uploads.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Animate progress rings
+            setTimeout(() => {
+                const rings = document.querySelectorAll('.progress-ring');
+                rings.forEach(ring => {
+                    const pct = parseInt(ring.getAttribute('data-pct'));
+                    const circle = ring.querySelector('.fill');
+                    const circumference = 2 * Math.PI * 31;
+                    circle.style.strokeDasharray = `${circumference} ${circumference}`;
+                    circle.style.strokeDashoffset = circumference; // reset first
+                    
+                    // Trigger reflow to ensure transition works
+                    circle.getBoundingClientRect();
+                    
+                    const offset = circumference - (pct / 100) * circumference;
+                    circle.style.strokeDashoffset = offset;
+                });
+            }, 100);
+            
+            // Vanilla Tilt
+            VanillaTilt.init(document.querySelectorAll(".candidate-card"), {
+                max: 2, speed: 400, perspective: 1500, scale: 1.01
+            });
+        });
+    </script>
+</body>
+</html>
